@@ -2,7 +2,7 @@ import fs from "fs"
 //const { Commander } = require('commander');
 //import { commander } from 'Commander';
 const commander = require('commander');
-import { SplunkSend } from './SplunkSend.js';
+import { SplunkSend } from './SplunkSend2.js';
 import path from 'path';
 
 
@@ -24,9 +24,9 @@ async function main(url,token,fileName) {
 //const commander = new Commander();
 commander
   .version('0.0.1')
-  .option('-u, --url <url>', 'Splunk HEC URL ex.http://mysplunk:8088/services/collector')
-  .option('-t, --token <string>', 'Splunk access token')
-  .option('-f, --file <path>', 'File to upload')
+  .requiredOption('-u, --url <url>', 'Splunk HEC URL ex.http://mysplunk:8088/services/collector')
+  .requiredOption('-t, --token <string>', 'Splunk access token')
+  .requiredOption('-f, --file <path>', 'File to upload')
   .parse(process.argv);
 
 console.log(commander.opts())

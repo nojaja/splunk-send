@@ -59,7 +59,6 @@ export class SplunkSend {
                     }
                 })
                 .catch(error => {
-                  console.error(error);
                   reject(error);
                 });
             })
