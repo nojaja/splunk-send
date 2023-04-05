@@ -41,9 +41,11 @@ export class SplunkSend {
             // POSTリクエストのオプションを設定
             const postOptions = {
                 url: this.url, // Splunk HECのURL
+                proxy: this.proxy,
                 headers: {
                     'Authorization': `Splunk ${this.token}`, // Splunk HECのトークン
-                    'Connection': 'keep-alive'
+                    'Connection': 'keep-alive',
+                    'X-Splunk-Request-Channel': this.channel
                 }
             };
 
