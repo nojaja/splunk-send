@@ -14,7 +14,7 @@ npm run build
 ```
 docker pull splunk/splunk
 
-docker run -d -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_USER=root" -e "SPLUNK_PASSWORD=<pass>" -p "8000:8000" -p "8088:8088" --name splunk splunk/splunk
+docker run -d -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_USER=root" -e "SPLUNK_PASSWORD=<pass>" -p "8000:8000" -p "8088:8088" -p "8089:8089" --name splunk splunk/splunk
 
 ```
 

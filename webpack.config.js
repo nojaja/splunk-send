@@ -1,29 +1,37 @@
-const src = __dirname + "/src"
-const dist = __dirname + "/dist"
-const webpack = require('webpack')
+const path = require('path');
+const src = path.resolve(__dirname, 'src');
+const dist = path.resolve(__dirname, 'dist');
+const webpack = require('webpack');
+const version = JSON.stringify(require('./package.json')).version;
 
 module.exports = {
-  mode: 'development',
+    mode: process.env.NODE_ENV || 'development',
   devtool: 'inline-source-map',
   target: 'node',
-  devServer: {
-    contentBase: dist
-  },
   context: src,
   entry: {
-    main: './index.js',
+        'loader': './index.js'
   },
   output: {
-    filename: 'index.bundle.js',
-    sourceMapFilename: '[name].map',
-    path: dist,
-    publicPath:"",
+        globalObject: 'this',
+        filename: './[name].bundle.js',
+        sourceMapFilename: './map/[id].[chunkhash].js.map',
+        chunkFilename: './chunk/[id].[chunkhash].js',
+        library: 'SplunkConnect',
     libraryExport: 'default',
-    libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        clean: true,
+        path: dist
+    },
+    resolve: {
+        extensions: ['.js'],
   },
+    plugins: [
+        new webpack.DefinePlugin({
+            __VERSION__: version
+        })
+    ],
   module: {
+        rules: [],
   },
-  resolve: {
-    modules: ['node_modules']
-  },
-}
+};
