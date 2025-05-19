@@ -22,52 +22,43 @@ export class LoadEvents {
         this.option = option;
     }
 
-    async sendCSV(filePath, postStream) {
-        const lockPath = filePath + '.lock';
+    async sendCSV(fileInfoObj, postStream) {
         try {
-            fs.renameSync(filePath, lockPath);
-            const csvReadStream = fs.createReadStream(lockPath).pipe(
+            fileInfoObj.lock();
+            const csvReadStream = fs.createReadStream(fileInfoObj.getFilePath()).pipe(
                 csv.parse({
                     columns: true,
                     skip_empty_lines: true,
                 })
             );
             csvReadStream.on('error', (error) => {
-                logger.error(`Error reading CSV file: ${filePath}`, error);
+                logger.error(`Error reading CSV file: ${fileInfoObj.getFilePath()}`, error);
             });
-            if (await postStream.open(filePath)) {
+            csvReadStream.on('finish', async () => {
+                logger.info(`Finished processing CSV file: ${fileInfoObj.getFilePath()}`);
+                fileInfoObj.unlock();
+                await postStream.end();
+            });
+            if (await postStream.open(fileInfoObj)) {
                 for await (const record of csvReadStream) {
                     if (this.debug) logger.debug(`record: ${JSON.stringify(record)}`);
                     await postStream.write(record);
                 }
             }
             csvReadStream.destroy();
-            fs.renameSync(lockPath, filePath);
-            await postStream.end();
-
-            csvReadStream.on('finish', () => {
-                logger.info(`Finished processing CSV file: ${filePath}`);
-            });
-
         } catch (error) {
-            logger.error(`Error processing CSV file: ${filePath}`, error);
+            logger.error(`Error processing CSV file: ${fileInfoObj.getFilePath()}`, error);
             if (!error.isRetry) {
-                logger.error(`Error processing CSV file: ${filePath}`, error);
+                logger.error(`Error processing CSV file: ${fileInfoObj.getFilePath()}`, error);
             }
             throw error;
-
-        } finally {
-            if (fs.existsSync(lockPath)) {
-                fs.renameSync(lockPath, filePath);
-            }
         }
     }
-    async sendJSON(filePath, postStream) {
-        const lockPath = filePath + '.lock';
+    async sendJSON(fileInfoObj, postStream) {
         try {
-            fs.renameSync(filePath, lockPath);
+            fileInfoObj.lock();
 
-            const jsonReadStream = fs.createReadStream(lockPath, { encoding: 'utf8' });
+            const jsonReadStream = fs.createReadStream(fileInfoObj.getFilePath());
             const rl = readline.createInterface({ input: jsonReadStream, crlfDelay: Infinity });
 
             if (await postStream.open(filePath)) {
@@ -83,48 +74,49 @@ export class LoadEvents {
                     if (this.debug) logger.info(`record: ${JSON.stringify(record)}`);
                     await postStream.write(record);
                 }
-                fs.renameSync(lockPath, filePath);
-                await postStream.end();
-                logger.info(`Finished processing JSON file: ${filePath}`);
             }
+            fileInfoObj.unlock();
+            await postStream.end();
+            logger.info(`Finished processing JSON file: ${fileInfoObj.getFilePath()}`);
             rl.close();
             jsonReadStream.close();
         } catch (error) {
-            logger.error(`Error processing JSON file: ${filePath}`, error);
+            logger.error(`Error processing JSON file: ${fileInfoObj.getFilePath()}`, error);
             throw error;
         } finally {
-            if (fs.existsSync(lockPath)) {
-                fs.renameSync(lockPath, filePath);
-            }
+            fileInfoObj.unlock();
         }
     }
-    async sendRaw(filePath, postStream) {
-        const lockPath = filePath + '.lock';
+    async sendRaw(fileInfoObj, postStream) {
         try {
-            fs.renameSync(filePath, lockPath);
-
-            const rawdataReadStream = fs.createReadStream(lockPath, { encoding: 'utf8' });
+            fileInfoObj.lock();
+            const rawdataReadStream = fs.createReadStream(fileInfoObj.getFilePath());
             const rl = readline.createInterface({ input: rawdataReadStream, crlfDelay: Infinity });
+            rawdataReadStream.on('error', (error) => {
+                logger.error(`Error reading raw data file: ${fileInfoObj.getFilePath()}`, error);
+            });
+            rawdataReadStream.on('end', () => {
+                logger.info(`Finished reading raw data file: ${fileInfoObj.getFilePath()}`);
+            });
+            rawdataReadStream.on('close', async () => {
+                logger.info(`Closed raw data file: ${fileInfoObj.getFilePath()}`);
+                fileInfoObj.unlock(); //.lock拡張子を削除
+                await postStream.end(); // postStreamを閉じる
+            });
 
-            if (await postStream.open(filePath)) {
+            if (await postStream.open(fileInfoObj)) {
                 for await (const line of rl) {
                     if (!line.trim()) continue;
                     if (this.debug) logger.info(`record: ${line}`);
                     await postStream.write(line);
                 }
-                fs.renameSync(lockPath, filePath);
-                await postStream.end();
-                logger.info(`Finished processing JSON file: ${filePath}`);
             }
+            logger.info(`Finished processing JSON file: ${fileInfoObj.getFilePath()}`);
             rl.close();
-            rawdataReadStream.close();
+            rawdataReadStream.close(); // createReadStreamを閉じる
         } catch (error) {
-            logger.error(`Error processing JSON file: ${filePath}`, error);
+            logger.error(`Error processing JSON file: ${fileInfoObj.getFilePath()}`, error);
             throw error;
-        } finally {
-            if (fs.existsSync(lockPath)) {
-                fs.renameSync(lockPath, filePath);
-            }
         }
     }
 }

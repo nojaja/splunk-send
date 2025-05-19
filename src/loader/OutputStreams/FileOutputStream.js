@@ -24,8 +24,8 @@ class FileOutputStream extends OutputStream {
     }
 
     async open(outputFile) {
-        const extname = path.extname(outputFile);
-        const basename = path.basename(outputFile, extname);
+        const extname = path.extname(outputFile.getFilePath());
+        const basename = path.basename(outputFile.getFilePath(), extname);
         const _outputFile = `output_${basename}.csv`;
         fs.mkdirSync(this.outputDir, { recursive: true });
         this.postStream = fs.createWriteStream(path.join(this.outputDir, _outputFile));
@@ -36,9 +36,13 @@ class FileOutputStream extends OutputStream {
         if (this.debug) logger.info(`FileOutputStream.write: ${data}`);
         return await this.postStream.write(data + "\n");
     }
+    
+    async checkpoint() {
+        if (this.chainCls) await this.chainCls.checkpoint();
+    }
 
     async end() {
-        await this.postStream.end();
+        if (this.chainCls) await this.postStream.end();
     }
     toString() {
         return `FileOutputStream: ${this.filePath}`;

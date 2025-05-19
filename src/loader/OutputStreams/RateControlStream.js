@@ -37,18 +37,16 @@ class RateControlStream extends OutputStream {
     }
 
     async open(outputFile) {
-        const lockPath = this.filePath + '.lock';
         try {
             this.size = 0;
             this.fileNumber++;
             const totalSize = this.getTotalFileSizeSync(this.completeDir);
-            const size = fs.statSync(lockPath).size;
-            if (this.debug) logger.info(`RateControlStream.open: ${this.filePath} size: ${size} totalSize: ${totalSize}`);
+            const size = outputFile.size();
+            if (this.debug) logger.info(`RateControlStream.open: ${outputFile.getFilePath()} size: ${size} totalSize: ${totalSize}`);
             if (this.ratelimitSize > totalSize + size) {
                 return await this.chainCls.open(outputFile);
             } else {
-                logger.info(`RateControlStream.open: ${this.filePath} size: ${size} totalSize: ${totalSize}`);
-
+                logger.info(`RateControlStream.open: ${outputFile.getFilePath()} size: ${size} totalSize: ${totalSize}`);
             }
         } catch (error) {
             console.error(`RateControlStream.open: ${error.message}`);
@@ -57,31 +55,39 @@ class RateControlStream extends OutputStream {
     }
 
     async write(data) {
-        const ret = await this.chainCls.write(data);
-        return ret;
+        if (this.chainCls) return await this.chainCls.write(data);
+    }
+
+    async checkpoint() {
+        if (this.chainCls) await this.chainCls.checkpoint();
     }
 
     async end() {
         try {
-            await this.chainCls.end();
-            const basename = path.basename(this.filePath);
-            const outputFile2 = path.join(this.completeDir, basename);
-            fs.renameSync(this.filePath, outputFile2);
+            if (this.chainCls) await this.chainCls.end();
+            const outputFile2 = path.join(this.completeDir, (this.filePath.getOriginalBaseName() + this.filePath.getOriginalExtName()));
+            this.filePath.rename(outputFile2);
         } catch (error) {
             console.error(`RateControlStream.end: ${error.message}`);
         }
     }
     getTotalFileSizeSync(dir) {
-        let totalSize = 0;
-        const files = fs.readdirSync(dir);
-        files.forEach(file => {
-            const filePath = path.join(dir, file);
-            const stats = fs.statSync(filePath);
-            if (stats.isFile()) {
-                totalSize += stats.size;
-            }
-        });
-        return totalSize;
+        try {
+            let totalSize = 0;
+            const files = fs.readdirSync(dir);
+            files.forEach(file => {
+                const filePath = path.join(dir, file);
+                const stats = fs.statSync(filePath);
+                if (stats.isFile()) {
+                    totalSize += stats.size;
+                }
+            });
+            return totalSize;
+        } catch (error) {
+            logger.error(`Error getting total file size: ${dir}`, error);
+            throw error;
+
+        }
     }
     toString() {
         return `FileOutputStream: ${this.filePath}`;

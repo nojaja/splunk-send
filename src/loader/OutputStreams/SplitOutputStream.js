@@ -26,11 +26,13 @@ class SplitOutputStream extends OutputStream {
     async open(outputFile) {
         this.size = 0;
         this.fileNumber++;
-        const extname = path.extname(outputFile);
-        const basename = path.basename(outputFile, extname);
+        const extname = path.extname(outputFile.getFilePath());
+        const basename = path.basename(outputFile.getFilePath(), extname);
         const _outputFile = `output_${basename}_${this.fileNumber}${extname}`;
+        const outputInfo = outputFile.clone();
+        outputInfo.setFilePath(_outputFile);
         logger.info(`FileOutputStream.open: ${_outputFile}`);
-        return await this.chainCls.open(_outputFile);
+        return await this.chainCls.open(outputInfo);
     }
 
     async write(data) {
@@ -44,8 +46,12 @@ class SplitOutputStream extends OutputStream {
         return ret;
     }
 
+    async checkpoint() {
+        if (this.chainCls) await this.chainCls.checkpoint();
+    }
+
     async end() {
-        await this.chainCls.end();
+        if (this.chainCls) await this.chainCls.end();
     }
     toString() {
         return `FileOutputStream: ${this.filePath}`;

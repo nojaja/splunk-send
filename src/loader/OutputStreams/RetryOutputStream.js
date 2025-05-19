@@ -30,7 +30,7 @@ class RetryOutputStream extends OutputStream {
         this.lineCount = 0;
         this.retryCount++;
         error.isRetry = (this.retryCount < this.retrylimit);
-        logger.error(`RetryOutputStream.retry: ${this.retryCount}/${this.retrylimit} lastLine: ${this.lastLine} error: ${error.message} file: ${this.filePath}`);
+        logger.error(`RetryOutputStream.retry: ${this.retryCount}/${this.retrylimit} lastLine: ${this.lastLine} error: ${error.message} file: ${this.filePath.getFilePath()}`);
         await setTimeout(this.retrywait * this.retryCount);
         throw error;
     }
@@ -54,6 +54,7 @@ class RetryOutputStream extends OutputStream {
             }
         }
     }
+
     async checkpoint() {
         this.lastLine = this.lineCount + 1;
         if (this.chainCls) await this.chainCls.checkpoint();
@@ -63,11 +64,13 @@ class RetryOutputStream extends OutputStream {
         try {
             if (this.chainCls) await this.chainCls.end();
         } catch (error) {
+            logger.error(`RetryOutputStream.end: ${error.message}`,error);
             await this.retry(error);
         }
     }
+
     toString() {
-        return `FileOutputStream: ${this.filePath}`;
+        return `FileOutputStream: ${this.filePath.getFilePath()}`;
     }
 }
 export default RetryOutputStream;

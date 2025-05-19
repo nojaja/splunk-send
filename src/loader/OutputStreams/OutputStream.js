@@ -14,6 +14,7 @@ class OutputStream {
   async write(data) {
     throw new Error("Method 'write' must be implemented.");
   }
+  
   async checkPoint() {
     throw new Error("Method 'checkPoint' must be implemented.");
   }

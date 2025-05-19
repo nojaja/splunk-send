@@ -51,9 +51,14 @@ class JsonOutputStream extends OutputStream {
         if (this.chainCls) return await this.chainCls.write(recode);
     }
 
+    async checkpoint() {
+        if (this.chainCls) await this.chainCls.checkpoint();
+    }
+
     async end() {
         if (this.chainCls) await this.chainCls.end();
     }
+    
     toString() {
         return `JsonOutputStream: ${this.filePath}`;
     }

@@ -75,6 +75,7 @@ class SplunkOutputStream extends OutputStream {
     }
 
     async end() {
+        if (this.postStream === null) return;
         const waitResponse = async (postStream) => {
             return new Promise((resolve) => {
                 postStream.once('response', resolve);

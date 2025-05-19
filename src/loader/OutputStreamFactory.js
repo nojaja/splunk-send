@@ -14,7 +14,6 @@ log4js.configure({
 const logger = log4js.getLogger('loader/OutputStreamFactory.js');
 logger.level = 'all'; // Set the desired log level
 
-
 class OutputStreamFactory {
     constructor(OutputStreams, cliOptions, config) {
         this.OutputStreams = OutputStreams;
@@ -43,16 +42,16 @@ class OutputStreamFactory {
         });
         return names;
     }
-    getInstance(filePath) {
-        const _getInstance = (filePath, outputStreams, rootCls) => {
+    getInstance(fileInfoObj) {
+        const _getInstance = (fileInfoObj, outputStreams, rootCls) => {
             const Cls = outputStreams.shift();
             if (!Cls) return null;
-            const instance = new Cls(filePath, this.options);
+            const instance = new Cls(fileInfoObj, this.options);
             instance.rootCls = (rootCls) ? rootCls : instance;
-            instance.chainCls = _getInstance(filePath, outputStreams, instance.rootCls);
+            instance.chainCls = _getInstance(fileInfoObj, outputStreams, instance.rootCls);
             return instance;
         }
-        return _getInstance(filePath, Array.from(this.OutputStreams));
+        return _getInstance(fileInfoObj, Array.from(this.OutputStreams));
     }
 }
 export default OutputStreamFactory;

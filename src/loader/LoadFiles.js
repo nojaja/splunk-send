@@ -24,6 +24,79 @@ const Settings = {}
 const _dirwalk = new Dirwalk(false);
 const dirwalk = _dirwalk.dirwalk.bind(_dirwalk);
 
+class fileInfo {
+    constructor(filePath) {
+        this.originalfilePath = filePath;
+        this.filePath = filePath;
+    }
+    getFilePath() {
+        return this.filePath;
+    }
+    setFilePath(filePath) {
+        this.filePath = filePath;
+    }
+    getOriginalFilePath() {
+        return this.originalfilePath;
+    }
+    getExtName() {
+        return path.extname(this.filePath);//ファイルの拡張子取得
+    }
+    getBaseName() {
+        return path.basename(this.filePath, this.getExtName());//ファイル名取得
+    }
+    getOriginalExtName() {
+        return path.extname(this.originalfilePath);//ファイルの拡張子取得
+    }
+    getOriginalBaseName() {
+        return path.basename(this.originalfilePath, this.getOriginalExtName());//ファイル名取得
+    }
+    size() {
+        try {
+            const stats = fs.statSync(this.filePath);
+            return stats.size;
+        } catch (error) {
+            logger.error(`Error getting file size: ${this.filePath}`, error);
+            throw error;
+        }
+    }
+    rename(newFilePath) {
+        try {
+            fs.renameSync(this.filePath, newFilePath);
+            this.filePath = newFilePath;
+        } catch (error) {
+            logger.error(`Error renaming file: ${this.filePath}`, error);
+            throw error;
+        }
+    }
+    lock() {
+        const lockPath = this.originalfilePath + '.lock';
+        try {
+            fs.renameSync(this.originalfilePath, lockPath);
+            this.filePath = lockPath;
+        } catch (error) {
+            logger.error(`Error locking file: ${this.originalfilePath}`, error);
+            throw error;
+        }
+    }
+    unlock() {
+        const lockPath = this.originalfilePath + '.lock';
+        try {
+            if (fs.existsSync(lockPath)) {
+                fs.renameSync(lockPath, this.originalfilePath);
+            }
+            this.filePath = this.originalfilePath;
+        } catch (error) {
+            logger.error(`Error unlocking file: ${this.originalfilePath}`, error);
+            throw error;
+        }
+    }
+    clone() {
+        const clone = new fileInfo(this.originalfilePath);
+        clone.setFilePath(this.filePath);
+        return clone;
+    }
+}
+
 export class LoadFiles {
     constructor(debug = false) {
         this.debug = debug;
@@ -38,10 +111,11 @@ export class LoadFiles {
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, NullOutputStream], cliOptions, config);
             } else if (cliOptions['queue']) {
                 config.outputDir = config.queueDir || './queue/';
-                postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, FileOutputStream], cliOptions, config);
+                postStreamFactory = new OutputStreamFactory([SplitOutputStream, JsonOutputStream, FileOutputStream], cliOptions, config);
             } else if (cliOptions['rerun']) {
                 //postStreamFactory = new OutputStreamFactory([RateControlStream, SplunkOutputStream], cliOptions, config);
-                postStreamFactory = new OutputStreamFactory([RateControlStream, SplunkOutputStream], cliOptions, config);
+                postStreamFactory = new OutputStreamFactory([RateControlStream, RetryOutputStream, SplunkOutputStream], cliOptions, config);
+                //postStreamFactory = new OutputStreamFactory([RateControlStream, SplunkOutputStream], cliOptions, config);
             } else {
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, SplunkOutputStream], cliOptions, config);
             }
@@ -50,24 +124,23 @@ export class LoadFiles {
                 if (this.debug) logger.debug(`file: ${filepath}`);
 
                 const fullpath = path.join(targetPath, filepath);//ファイルのフルパス取得
-                const extname = path.extname(filepath);//ファイルの拡張子取得
-                const basename = path.basename(filepath, extname);//ファイル名取得
+                const fileInfoObj = new fileInfo(fullpath);
                 const filenum = num++;
-                if (extname === '.lock') return;
+                if (fileInfoObj.getExtName() === '.lock') return;
 
-                logger.info(`Processing file: ${filepath}`);
-                const stats = fs.statSync(fullpath);
-                if (stats.size > 0) {
-                    logger.info(`File size: ${stats.size} bytes`);
-                    const postStream = postStreamFactory.getInstance(fullpath);
+                logger.info(`Processing file: ${fileInfoObj.getFilePath()}`);
+                const size = fileInfoObj.size();
+                if (size > 0) {
+                    logger.info(`File size: ${size} bytes`);
+                    const postStream = postStreamFactory.getInstance(fileInfoObj);
                     try {
                         let isRetry = false;
                         do {
                             try {
                                 if (cliOptions['rerun']) {
-                                    await loadEvents.sendRaw(fullpath, postStream);
+                                    await loadEvents.sendRaw(fileInfoObj, postStream);
                                 } else {
-                                    await loadEvents.sendCSV(fullpath, postStream);
+                                    await loadEvents.sendCSV(fileInfoObj, postStream);
                                 }
                             } catch (error) {
                                 if (!error.isRetry) throw error;
