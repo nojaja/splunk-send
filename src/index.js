@@ -30,12 +30,12 @@ const program = new Command();
 program.version(version);
 program
   .requiredOption('-c, --config <path>', 'config file path')
-  .requiredOption('-i, --input <path>', 'input file path')
+  .requiredOption('-i, --input <path>', 'input directory path')
   .option('-s, --sourcetype <string>', 'sourcetype key')
-  .option('-t, --timestamp <yyyymmddhh>', 'set timestamp')
-  .option('-j, --jobsession <yyyymmddhh>', 'set jobsession')
+  .option('-t, --timestamp <yyyymmddhh>', 'overwrite timestamp')
+  .option('-j, --jobsession <yyyymmddhh>', 'overwrite jobsession')
   .option('--ix --index <type>', 'select index')
-  .option('-d, --debug', 'Enable debug mode')
+  .option('-d, --debug', 'output extra debug information')
   .option('--queue', 'queue mode')
   .option('--rerun', 'rerun mode')
   .option('--dry-run', 'dry-run mode');
@@ -53,11 +53,11 @@ const inputPath = PathUtil.normalizeSeparator(
 
 if (cliOptions.config) logger.info(`Config - ${configPath}`);
 logger.info(`Input file: ${inputPath}`);
-if (cliOptions.sourcetype) logger.info(`Sourcetype: ${cliOptions.sourcetype}`);
+if (cliOptions.sourcetype) logger.info(`Sourcetype - ${cliOptions.sourcetype}`);
 
 if (cliOptions.config && !fs.existsSync(configPath)) {
   throw new Error(`Config file not found: ${configPath}`);
-}
+};
 
 process.on('uncaughtException', (err) => {
   logger.error('Uncaught Exception:', err);

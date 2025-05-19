@@ -1,4 +1,4 @@
-import * as path from 'path';
+import path from 'path';
 import log4js from 'log4js';
 import OutputStream from './OutputStream.js';
 // Log4js configuration

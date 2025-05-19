@@ -4,7 +4,6 @@ class OutputStream {
     this.options = options;
     this.rootCls = null;
     this.chainCls = null;
-
     this.debug = options.debug || false;
   }
 

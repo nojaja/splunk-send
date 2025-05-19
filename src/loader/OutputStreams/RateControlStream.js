@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import log4js from 'log4js';
 import OutputStream from './OutputStream.js';
 // Log4js configuration
@@ -20,7 +20,7 @@ class RateControlStream extends OutputStream {
     constructor(filePath, options) {
         super(filePath, options);
         this.size = 0;
-        this.ratelimitSize = options.ratelimitSize || 1000;
+        this.ratelimitSize = options.ratelimitSize || 10 * 1024 * 1024; // 10MB
         this.fileNumber = 0;
 
         const formatDate = current_datetime => {

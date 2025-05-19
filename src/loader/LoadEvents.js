@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import log4js from 'log4js';
 import * as csv from 'csv';
 import * as readline from 'readline';

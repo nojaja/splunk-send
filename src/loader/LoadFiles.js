@@ -46,16 +46,16 @@ export class LoadFiles {
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, SplunkOutputStream], cliOptions, config);
             }
             let num = 1;
-            await dirwalk(targetPath, Settings, async (filePath, settings) => {
-                if (this.debug) logger.debug(`file: ${filePath}`);
+            await dirwalk(targetPath, Settings, async (filepath, settings) => {
+                if (this.debug) logger.debug(`file: ${filepath}`);
 
-                const fullpath = path.join(targetPath, filePath);//ファイルのフルパス取得
-                const extname = path.extname(filePath);//ファイルの拡張子取得
-                const basename = path.basename(filePath, extname);//ファイル名取得
+                const fullpath = path.join(targetPath, filepath);//ファイルのフルパス取得
+                const extname = path.extname(filepath);//ファイルの拡張子取得
+                const basename = path.basename(filepath, extname);//ファイル名取得
                 const filenum = num++;
                 if (extname === '.lock') return;
 
-                logger.info(`Processing file: ${filePath}`);
+                logger.info(`Processing file: ${filepath}`);
                 const stats = fs.statSync(fullpath);
                 if (stats.size > 0) {
                     logger.info(`File size: ${stats.size} bytes`);

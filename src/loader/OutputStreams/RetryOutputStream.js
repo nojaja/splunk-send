@@ -22,7 +22,7 @@ class RetryOutputStream extends OutputStream {
         this.lastLine = 1;
         this.retryCount = 0;
         this.retrylimit = options.retrylimit || 3;
-        this.retrywait = options.retrywait || 1000;
+        this.retrywait = options.retrywait || 1000 * 60 * 3; // 3 minutes
         this.outputFile = null;
     }
 
