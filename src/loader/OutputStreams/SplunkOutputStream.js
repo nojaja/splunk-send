@@ -4,7 +4,7 @@ import request from 'request-stream';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }
@@ -51,7 +51,7 @@ class SplunkOutputStream extends OutputStream {
             logger.info('SplunkOutputStream: Finished writing to Splunk');
         });
         this.postStream.on('error', (error) => {
-            logger.error(`SplunkOutputStream: Error writing to Splunk: ${error}`,error);
+            logger.error(`SplunkOutputStream: Error writing to Splunk: ${error}`, error);
         });
         this.postStream.on('close', () => {
             logger.info('SplunkOutputStream: Connection closed');
@@ -69,7 +69,7 @@ class SplunkOutputStream extends OutputStream {
             });
         }
         if (this.debug) logger.info(`SplunkOutputStream.write: ${data}`);
-        if(!await this.postStream.write(data)) {
+        if (!await this.postStream.write(data)) {
             await waitDrain(this.postStream);
         }
     }
@@ -86,7 +86,7 @@ class SplunkOutputStream extends OutputStream {
             logger.info('SplunkOutputStream: Successfully wrote to Splunk');
         } else {
             logger.error(`SplunkOutputStream: Error writing to Splunk: ${response.statusCode}`);
-            throw new Error(`SplunkOutputStream: Error writing to Splunk: ${response.statusCode}`,{ cause: response });
+            throw new Error(`SplunkOutputStream: Error writing to Splunk: ${response.statusCode}`, { cause: response });
         }
     }
     toString() {

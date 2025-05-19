@@ -5,7 +5,7 @@ import OutputStream from './OutputStream.js';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }
@@ -34,7 +34,7 @@ class FileOutputStream extends OutputStream {
 
     async write(data) {
         if (this.debug) logger.info(`FileOutputStream.write: ${data}`);
-        return await this.postStream.write(data+"\n");
+        return await this.postStream.write(data + "\n");
     }
 
     async end() {

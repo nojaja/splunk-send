@@ -5,7 +5,7 @@ import * as readline from 'readline';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }

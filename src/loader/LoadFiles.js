@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import log4js from 'log4js';
 import Dirwalk from '../common/Dirwalk';
 import LoadEvents from './LoadEvents';
@@ -10,15 +10,15 @@ import CsvOutputStream from './OutputStreams/CsvOutputStream';
 import JsonOutputStream from './OutputStreams/JsonOutputStream';
 import SplitOutputStream from './OutputStreams/SplitOutputStream';
 import RetryOutputStream from './OutputStreams/RetryOutputStream';
-import RateOutputStream from './OutputStreams/RateOutputStream';
+import RateControlStream from './OutputStreams/RateControlStream';
 import SplunkOutputStream from './OutputStreams/SplunkOutputStream';
 
 
 /*Logger設定 */
-const logger = log4js.getLogger('loader/index.js');
+const logger = log4js.getLogger('loader/LoadFiles.js');
 logger.level = 'all'; // Set the desired log level
 
-/*初期設定 */
+/*初期値設定 */
 const Settings = {}
 
 const _dirwalk = new Dirwalk(false);
@@ -40,8 +40,8 @@ export class LoadFiles {
                 config.outputDir = config.queueDir || './queue/';
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, FileOutputStream], cliOptions, config);
             } else if (cliOptions['rerun']) {
-                //postStreamFactory = new OutputStreamFactory([RateOutputStream, SplunkOutputStream], cliOptions, config);
-                postStreamFactory = new OutputStreamFactory([RateOutputStream, SplunkOutputStream], cliOptions, config);
+                //postStreamFactory = new OutputStreamFactory([RateControlStream, SplunkOutputStream], cliOptions, config);
+                postStreamFactory = new OutputStreamFactory([RateControlStream, SplunkOutputStream], cliOptions, config);
             } else {
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, SplunkOutputStream], cliOptions, config);
             }
@@ -49,9 +49,9 @@ export class LoadFiles {
             await dirwalk(targetPath, Settings, async (filePath, settings) => {
                 if (this.debug) logger.debug(`file: ${filePath}`);
 
-                const fullpath = path.join(targetPath, filePath);
-                const extname = path.extname(filePath);
-                const basename = path.basename(filePath, extname);
+                const fullpath = path.join(targetPath, filePath);//ファイルのフルパス取得
+                const extname = path.extname(filePath);//ファイルの拡張子取得
+                const basename = path.basename(filePath, extname);//ファイル名取得
                 const filenum = num++;
                 if (extname === '.lock') return;
 
@@ -70,11 +70,8 @@ export class LoadFiles {
                                     await loadEvents.sendCSV(fullpath, postStream);
                                 }
                             } catch (error) {
-                                if (!error.isRetry) {
-                                    throw error;
-                                }
+                                if (!error.isRetry) throw error;
                                 isRetry = true;
-
                             }
                         } while (isRetry);
                     } catch (error) {
@@ -92,7 +89,6 @@ export class LoadFiles {
             });
         } catch (error) {
             logger.error(`Error in LoadFiles.main: ${error.message}`, error);
-
         }
     }
 }

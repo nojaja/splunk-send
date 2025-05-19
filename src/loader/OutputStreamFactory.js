@@ -4,7 +4,7 @@ import log4js from 'log4js';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }
@@ -32,7 +32,7 @@ class OutputStreamFactory {
                 sourcetype: cliOptions.sourcetype || 'test'
             }
         })
-        if(cliOptions.index) {
+        if (cliOptions.index) {
             this.options.eventMetadata.index = cliOptions.index;
         }
     }
@@ -44,10 +44,10 @@ class OutputStreamFactory {
         return names;
     }
     getInstance(filePath) {
-        const _getInstance = (filePath,outputStreams,rootCls) => {
+        const _getInstance = (filePath, outputStreams, rootCls) => {
             const Cls = outputStreams.shift();
             if (!Cls) return null;
-            const instance = new Cls(filePath,this.options);
+            const instance = new Cls(filePath, this.options);
             instance.rootCls = (rootCls) ? rootCls : instance;
             instance.chainCls = _getInstance(filePath, outputStreams, instance.rootCls);
             return instance;

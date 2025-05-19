@@ -4,7 +4,7 @@ import { setTimeout } from 'timers/promises';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }
@@ -56,12 +56,12 @@ class RetryOutputStream extends OutputStream {
     }
     async checkpoint() {
         this.lastLine = this.lineCount + 1;
-        if(this.chainCls)await this.chainCls.checkpoint();
+        if (this.chainCls) await this.chainCls.checkpoint();
     }
 
     async end() {
         try {
-            if(this.chainCls) await this.chainCls.end();
+            if (this.chainCls) await this.chainCls.end();
         } catch (error) {
             await this.retry(error);
         }

@@ -8,8 +8,8 @@ class OutputStream {
     this.debug = options.debug || false;
   }
 
-  async open(outputFile){
-    if(this.chainCls)return this.chainCls.open(outputFile);
+  async open(outputFile) {
+    if (this.chainCls) return this.chainCls.open(outputFile);
   }
 
   async write(data) {
@@ -22,7 +22,7 @@ class OutputStream {
   async end() {
     throw new Error("Method 'close' must be implemented.");
   }
-  
+
   toString() {
     return `OutputStream: ${this.filePath}`;
   }

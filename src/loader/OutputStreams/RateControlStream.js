@@ -5,18 +5,18 @@ import OutputStream from './OutputStream.js';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }
     }
 });
 // Create a logger instance
-const logger = log4js.getLogger('loader/RateOutputStream.js');
+const logger = log4js.getLogger('loader/RateControlStream.js');
 logger.level = 'all'; // Set the desired log level
 
 
-class RateOutputStream extends OutputStream {
+class RateControlStream extends OutputStream {
     constructor(filePath, options) {
         super(filePath, options);
         this.size = 0;
@@ -43,15 +43,15 @@ class RateOutputStream extends OutputStream {
             this.fileNumber++;
             const totalSize = this.getTotalFileSizeSync(this.completeDir);
             const size = fs.statSync(lockPath).size;
-            if (this.debug) logger.info(`RateOutputStream.open: ${this.filePath} size: ${size} totalSize: ${totalSize}`);
+            if (this.debug) logger.info(`RateControlStream.open: ${this.filePath} size: ${size} totalSize: ${totalSize}`);
             if (this.ratelimitSize > totalSize + size) {
                 return await this.chainCls.open(outputFile);
             } else {
-                logger.info(`RateOutputStream.open: ${this.filePath} size: ${size} totalSize: ${totalSize}`);
+                logger.info(`RateControlStream.open: ${this.filePath} size: ${size} totalSize: ${totalSize}`);
 
             }
         } catch (error) {
-            console.error(`RateOutputStream.open: ${error.message}`);
+            console.error(`RateControlStream.open: ${error.message}`);
         }
         return false;
     }
@@ -68,13 +68,13 @@ class RateOutputStream extends OutputStream {
             const outputFile2 = path.join(this.completeDir, basename);
             fs.renameSync(this.filePath, outputFile2);
         } catch (error) {
-            console.error(`RateOutputStream.end: ${error.message}`);
+            console.error(`RateControlStream.end: ${error.message}`);
         }
     }
     getTotalFileSizeSync(dir) {
         let totalSize = 0;
         const files = fs.readdirSync(dir);
-        files.forEach(file => { 
+        files.forEach(file => {
             const filePath = path.join(dir, file);
             const stats = fs.statSync(filePath);
             if (stats.isFile()) {
@@ -82,9 +82,9 @@ class RateOutputStream extends OutputStream {
             }
         });
         return totalSize;
-    }   
+    }
     toString() {
         return `FileOutputStream: ${this.filePath}`;
     }
 }
-export default RateOutputStream;
+export default RateControlStream;

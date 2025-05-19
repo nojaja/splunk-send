@@ -1,17 +1,16 @@
 import path from 'path';
 import fs from 'fs';
-import 'source-map-support/register.js';
 import { Command } from 'commander';
 import log4js from 'log4js';
 import * as PathUtil from '@nojaja/pathutil';
-import * as ConfigLoader from 'nodeconfigloder';
+import ConfigLoader from 'nodeconfigloder';
 import LoadFiles from './loader/LoadFiles';
+import 'source-map-support/register.js';
 
-
-// Log4js configuration
+/*Logger設定 */
 log4js.configure({
   appenders: {
-    out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+    out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
   },
   categories: {
     default: { appenders: ['out'], level: 'all' }
@@ -21,12 +20,12 @@ log4js.configure({
 const logger = log4js.getLogger('loader/index.js');
 logger.level = 'all'; // Set the desired log level
 
-/**初期設定 */
+/*初期値設定 */
 const outputdir = './output';
 const SettingsPath = path.join(__dirname, 'env.yaml');
 const cryptokey = Buffer.from("1234567890123456", 'hex');
 const version = (typeof __VERSION__ !== 'undefined') ? __VERSION__ : 'dev';
-/**起動パラメータ */
+/*起動パラメータ */
 const program = new Command();
 program.version(version);
 program
@@ -52,7 +51,7 @@ const inputPath = PathUtil.normalizeSeparator(
   PathUtil.absolutePath(cliOptions.input)
 );
 
-if (cliOptions.config) logger.info(`Config file: ${configPath}`);
+if (cliOptions.config) logger.info(`Config - ${configPath}`);
 logger.info(`Input file: ${inputPath}`);
 if (cliOptions.sourcetype) logger.info(`Sourcetype: ${cliOptions.sourcetype}`);
 
@@ -62,23 +61,19 @@ if (cliOptions.config && !fs.existsSync(configPath)) {
 
 process.on('uncaughtException', (err) => {
   logger.error('Uncaught Exception:', err);
-  process.exit(1);
 });
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
 });
 
-global._wait = (ms) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+global._wait = ms => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const main = async () => {
   const startTime = process.hrtime();
   process.on('exit', exitCode => {
-    //後始末処理
+    // 後始末処理
     const endTimeArray = process.hrtime(startTime);
     const memoryUsage = process.memoryUsage();
     function toMByte(byte) {
@@ -91,20 +86,20 @@ const main = async () => {
       "external": toMByte(memoryUsage.external),
       "arrayBuffers": toMByte(memoryUsage.arrayBuffers)
     });
-    console.log(`process statistics - Execution time: ${endTimeArray[0]}s ${endTimeArray[1] / 1000000}ms, memoryUsage: ${_memoryUsage}`);
+    logger.info(`process statistics - Execution time: ${endTimeArray[0]}s ${endTimeArray[1] / 1000000}ms, memoryUsage: ${_memoryUsage}`);
   });
   const configLoder = new ConfigLoader(cryptokey);
   const config = JSON.parse(await configLoder.readConfigSync(configPath));
   if (cliOptions.jobsession) {
-    logger.info(`Job session: ${cliOptions.jobsession}`);
+    logger.info(`Jobsession - ${cliOptions.jobsession}`);
     config['jobsession'] = cliOptions.jobsession;
   }
   if (cliOptions.timestamp) {
-    logger.info(`Timestamp: ${cliOptions.timestamp}`);
+    logger.info(`Timestamp - ${cliOptions.timestamp}`);
     config['timestamp'] = cliOptions.timestamp;
   }
   if (cliOptions.index) {
-    logger.info(`Index: ${cliOptions.index}`);
+    logger.info(`Index - ${cliOptions.index}`);
     config['index'] = cliOptions.index;
   }
 

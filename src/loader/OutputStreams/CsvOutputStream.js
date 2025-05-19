@@ -4,7 +4,7 @@ import OutputStream from './OutputStream.js';
 // Log4js configuration
 log4js.configure({
     appenders: {
-        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [%pid%z]%] %c %m' } }
+        out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
     },
     categories: {
         default: { appenders: ['out'], level: 'all' }
@@ -23,14 +23,14 @@ class CsvOutputStream extends OutputStream {
     }
 
     async open(outputFile) {
-        if(this.chainCls)await this.chainCls.open(outputFile);
+        if (this.chainCls) await this.chainCls.open(outputFile);
         this.postStream = csv.stringify({
             header: true
         });
-        this.postStream.on('data', async(chunk) => {
-            if(this.chainCls)await this.chainCls.write(chunk.toString());
+        this.postStream.on('data', async (chunk) => {
+            if (this.chainCls) await this.chainCls.write(chunk.toString());
         });
-        this.postStream.on('finish', () => {});
+        this.postStream.on('finish', () => { });
         this.postStream.on('error', (err) => {
             logger.error(`Error in CsvOutputStream: ${err}`);
         });
@@ -39,13 +39,13 @@ class CsvOutputStream extends OutputStream {
 
     async write(data) {
         const recode = Object.assign(this.eventMetadata, data);
-        if(this.debug) logger.info(`CsvOutputStream.write: ${JSON.stringify(recode)}`);
+        if (this.debug) logger.info(`CsvOutputStream.write: ${JSON.stringify(recode)}`);
         return await this.postStream.write(recode);
     }
 
     async end() {
         await this.postStream.end();
-        if(this.chainCls)await this.chainCls.end();
+        if (this.chainCls) await this.chainCls.end();
     }
     toString() {
         return `CsvOutputStream: ${this.filePath}`;
