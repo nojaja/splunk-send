@@ -26,8 +26,8 @@ class SplitOutputStream extends OutputStream {
     async open(outputFile) {
         this.size = 0;
         this.fileNumber++;
-        const extname = path.extname(outputFile.getFilePath());
-        const basename = path.basename(outputFile.getFilePath(), extname);
+        const extname = outputFile.getExtName();
+        const basename = outputFile.getBaseName();
         const _outputFile = `output_${basename}_${this.fileNumber}${extname}`;
         const outputInfo = outputFile.clone();
         outputInfo.setFilePath(_outputFile);

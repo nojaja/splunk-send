@@ -25,14 +25,19 @@ class NullOutputStream extends OutputStream {
     }
 
     async write(data) {
-        logger.info(`NullOutputStream.write: ${JSON.stringify(data)}`);
+        if (this.debug) logger.info(`NullOutputStream.write: ${JSON.stringify(data)}`);
         return true;
+    }
+
+    async checkpoint() {
+        if (this.chainCls) await this.chainCls.checkpoint();
     }
 
     async end() {
         logger.info(`NullOutputStream.end: ${this.filePath}`);
         return true;
     }
+
     toString() {
         return `NullOutputStream: ${this.filePath}`;
     }

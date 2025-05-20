@@ -1,7 +1,7 @@
 {
   "name": "splunk-send",
-  "version": "1.0.0",
-  "description": "SplunkEE�ւ̃f�[�^�����c�[��",
+  "version": "1.0.1",
+  "description": "SplunkEEへのデータ投入ツール",
   "main": "dist/loader.bundle.js",
   "bin": {
     "loader": "loader.bundle.js"
