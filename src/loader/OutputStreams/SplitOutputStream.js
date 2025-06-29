@@ -19,26 +19,27 @@ class SplitOutputStream extends OutputStream {
     constructor(filePath, options) {
         super(filePath, options);
         this.size = 0;
-        this.limitSize = options.limitSize || 1000;
+        this.limitSize = options.limitSize || 10 * 1000 * 1000; // デフォルトは10MB
         this.fileNumber = 0;
     }
 
     async open(outputFile) {
         this.size = 0;
         this.fileNumber++;
-        const extname = outputFile.getExtName();
-        const basename = outputFile.getBaseName();
-        const _outputFile = `output_${basename}_${this.fileNumber}${extname}`;
+        const extname = outputFile.getOriginalExtName();//ファイルの拡張子取得
+        const basename = outputFile.getOriginalBaseName();//ファイル名取得
+        const direname = outputFile.getDirName();//ファイルのディレクトリ取得
+        const newFilePath = path.join(direname, `${basename}_${this.fileNumber}${extname}`);
         const outputInfo = outputFile.clone();
-        outputInfo.setFilePath(_outputFile);
-        logger.info(`FileOutputStream.open: ${_outputFile}`);
+        outputInfo.setFilePath(newFilePath);
+        logger.info(`FileOutputStream.open: ${newFilePath}`);
         return await this.chainCls.open(outputInfo);
     }
 
     async write(data) {
         const ret = await this.chainCls.write(data);
-        this.size = this.size + Buffer.byteLength(Object.values(data).join(','), 'utf8');
-        if (this.size >= this.limitSize) {
+        this.size = this.size + Buffer.byteLength(Object.values(data).join(','), 'utf8');//データのサイズを計算
+        if (this.size >= this.limitSize) {// サイズが制限を超えた場合、新しく出力先を用意する
             await this.end();
             await this.rootCls.checkpoint();
             await this.open(this.filePath);

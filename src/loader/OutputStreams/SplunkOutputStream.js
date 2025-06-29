@@ -16,6 +16,7 @@ logger.level = 'all'; // Set the desired log level
 
 
 class SplunkOutputStream extends OutputStream {
+    // コンストラクタでSplunk HECのURLとトークンを受け取る
     constructor(filePath, options) {
         super(filePath, options);
         this.postStream = null;
@@ -29,10 +30,11 @@ class SplunkOutputStream extends OutputStream {
 
     async open(outputFile) {
         this.outputFile = outputFile;
+        // POSTリクエストのオプションを設定
         const postOptions = {
-            url: this.url,
+            url: this.url, // Splunk HECのURL
             headers: {
-                Authorization: `Splunk ${this.token}`,
+                Authorization: `Splunk ${this.token}`, // Splunk HECのトークン
                 Connection: 'close',
                 'X-Splunk-Request-Channel': this.channel,
                 'Content-Type': 'application/json'
@@ -42,6 +44,7 @@ class SplunkOutputStream extends OutputStream {
         if (typeof this.proxy === 'string' && this.proxy.length > 0) {
             postOptions.proxy = this.proxy;
         }
+        // POSTリクエストを送るストリームを作成
         this.postStream = request.post(this.url, postOptions, (err, res, body) => {
             if (err) {
                 logger.error(`SplunkOutputStream: Request error: ${err}`, err);
@@ -62,7 +65,9 @@ class SplunkOutputStream extends OutputStream {
         return true;
     }
 
+    // 読み込んだデータをJSON形式に変換してEventMetadataを付与してPOSTリクエストに書き込む
     async write(data) {
+        //送信バッファが履けるのを待つ
         const waitDrain = async (postStream) => {
             return new Promise((resolve) => {
                 postStream.once('drain', resolve);

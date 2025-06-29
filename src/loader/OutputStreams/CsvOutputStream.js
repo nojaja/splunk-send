@@ -38,9 +38,9 @@ class CsvOutputStream extends OutputStream {
     }
 
     async write(data) {
-        const recode = Object.assign(this.eventMetadata, data);
-        if (this.debug) logger.info(`CsvOutputStream.write: ${JSON.stringify(recode)}`);
-        return await this.postStream.write(recode);
+        const record = Object.assign(this.eventMetadata, data);
+        if (this.debug) logger.info(`CsvOutputStream.write: ${JSON.stringify(record)}`);
+        return await this.postStream.write(record);
     }
 
     async end() {

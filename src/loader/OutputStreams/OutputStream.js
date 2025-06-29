@@ -12,15 +12,15 @@ class OutputStream {
   }
 
   async write(data) {
-    throw new Error("Method 'write' must be implemented.");
+    if (this.chainCls) return this.chainCls.write(data);
   }
   
   async checkPoint() {
-    throw new Error("Method 'checkPoint' must be implemented.");
+    if (this.chainCls) return this.chainCls.checkPoint();
   }
 
   async end() {
-    throw new Error("Method 'close' must be implemented.");
+    if (this.chainCls) return this.chainCls.end();
   }
 
   toString() {
