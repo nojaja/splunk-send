@@ -2,7 +2,8 @@ import fs from 'fs';
 import log4js from 'log4js';
 import * as csv from 'csv';
 import * as readline from 'readline';
-// Log4js configuration
+
+/*Logger設定 */
 log4js.configure({
     appenders: {
         out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
@@ -14,7 +15,6 @@ log4js.configure({
 // Create a logger instance
 const logger = log4js.getLogger('loader/LoadEvents.js');
 logger.level = 'all'; // Set the desired log level
-
 
 export class LoadEvents {
     constructor(option = {}) {
@@ -64,6 +64,7 @@ export class LoadEvents {
             throw error;
         }
     }
+
     async sendJSON(fileInfoObj, postStream) {
         try {
             fileInfoObj.lock();

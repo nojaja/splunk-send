@@ -1,7 +1,8 @@
 import * as os from 'os';
 import * as uuid from 'node-uuid';
 import log4js from 'log4js';
-// Log4js configuration
+
+/*Logger設定 */
 log4js.configure({
     appenders: {
         out: { type: 'stdout', layout: { type: 'pattern', pattern: '%[[%d] [%5p] [%h] [pid%z]%] %c %m' } }
