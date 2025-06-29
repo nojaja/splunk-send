@@ -17,7 +17,20 @@ docker pull splunk/splunk
 docker run -d -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_USER=root" -e "SPLUNK_PASSWORD=<pass>" -p "8000:8000" -p "8088:8088" --name splunk splunk/splunk
 
 ```
+## token作成
+```
+[設定] » データ入力 » HTTPイベントコレクター » 新規トークン
+http://localhost:8000/ja-JP/manager/launcher/http-eventcollector
 
+```
+
+## グローバル設定を編集
+```
+[設定] » データ入力 » HTTPイベントコレクター » グローバル設定を編集
+http://localhost:8000/ja-JP/manager/launcher/http-eventcollector
+SSLを有効にする チェック外す
+
+```
 
 ## Usage
 ```
