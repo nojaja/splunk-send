@@ -1,5 +1,6 @@
 import fs from 'fs';
 import log4js from 'log4js';
+// CSVライブラリをインポート
 import * as csv from 'csv';
 import * as readline from 'readline';
 
@@ -25,6 +26,8 @@ export class LoadEvents {
     async sendCSV(fileInfoObj, postStream) {
         try {
             fileInfoObj.lock();
+            // CSVファイルを読み込むストリームを作成
+            logger.info(`sendCSV createReadStream open file: ${fileInfoObj.getFilePath()}`);
             const csvReadStream = fs.createReadStream(fileInfoObj.getFilePath()).pipe(
                 csv.parse({
                     columns: true,
@@ -37,10 +40,13 @@ export class LoadEvents {
                 csvReadStream.on('error', reject);
             });
             csvReadStream.on('error', (error) => {
-                logger.error(`Error reading CSV file: ${fileInfoObj.getFilePath()}`, error);
+                logger.error(`Error reading CSV file: ${fileInfoObj.getFilePath()}`, error.message);
             });
-            csvReadStream.on('finish', () => {
-                logger.info(`Finished processing CSV file: ${fileInfoObj.getFilePath()}`);
+            csvReadStream.on('finish', async () => {
+                logger.info(
+                    `Finished processing CSV file: ${fileInfoObj.getFilePath()}`,
+                    `CSVファイルの読み込みが完了しました。`
+                );
             });
             if (await postStream.open(fileInfoObj)) {
                 for await (const record of csvReadStream) {
@@ -55,24 +61,22 @@ export class LoadEvents {
 
             fileInfoObj.unlock();
             await postStream.end();
-
         } catch (error) {
             logger.error(`Error processing CSV file: ${fileInfoObj.getFilePath()}`, error);
             if (!error.isRetry) {
-                logger.error(`Error processing CSV file: ${fileInfoObj.getFilePath()}`, error);
+                logger.error(`Error processing CSV file: ${fileInfoObj.getFilePath()}`, error.message);
             }
             throw error;
         }
     }
-
     async sendJSON(fileInfoObj, postStream) {
         try {
             fileInfoObj.lock();
-
+            logger.info(`sendJSON createReadStream open file: ${fileInfoObj.getFilePath()}`);
             const jsonReadStream = fs.createReadStream(fileInfoObj.getFilePath());
             const rl = readline.createInterface({ input: jsonReadStream, crlfDelay: Infinity });
 
-            if (await postStream.open(filePath)) {
+            if (await postStream.open(fileInfoObj)) {
                 for await (const line of rl) {
                     if (!line.trim()) continue;
                     let record;
@@ -85,13 +89,12 @@ export class LoadEvents {
                     if (this.debug) logger.info(`record: ${JSON.stringify(record)}`);
                     await postStream.write(record);
                 }
+                fileInfoObj.unlock();
+                await postStream.end();
+                logger.info(`Finished processing JSON file: ${fileInfoObj.getFilePath()}`);
             }
-            logger.info(`Finished processing JSON file: ${fileInfoObj.getFilePath()}`);
             rl.close();
             jsonReadStream.close();
-
-            fileInfoObj.unlock();
-            await postStream.end();
         } catch (error) {
             logger.error(`Error processing JSON file: ${fileInfoObj.getFilePath()}`, error);
             throw error;
@@ -102,6 +105,7 @@ export class LoadEvents {
     async sendRaw(fileInfoObj, postStream) {
         try {
             fileInfoObj.lock();
+            logger.info(`sendRaw createReadStream open file: ${fileInfoObj.getFilePath()}`);
             const rawdataReadStream = fs.createReadStream(fileInfoObj.getFilePath());
             const rl = readline.createInterface({ input: rawdataReadStream, crlfDelay: Infinity });
             rawdataReadStream.on('error', (error) => {
@@ -125,8 +129,10 @@ export class LoadEvents {
                     if (this.debug) logger.info(`record: ${line}`);
                     await postStream.write(line);
                 }
+                fileInfoObj.unlock(); //.lock拡張子を削除
+                await postStream.end(); // postStreamを閉じる
+                logger.info(`Finished processing raw data file: ${fileInfoObj.getFilePath()}`);
             }
-            logger.info(`Finished processing JSON file: ${fileInfoObj.getFilePath()}`);
             rl.close();
             
             // for await終了後、finishイベントも待つ
@@ -135,12 +141,11 @@ export class LoadEvents {
                 rawdataReadStream.close(); // createReadStreamを閉じる
             }
 
-            fileInfoObj.unlock(); //.lock拡張子を削除
-            await postStream.end(); // postStreamを閉じる
-
         } catch (error) {
             logger.error(`Error processing JSON file: ${fileInfoObj.getFilePath()}`, error);
             throw error;
+        } finally {
+            fileInfoObj.unlock();
         }
     }
 }

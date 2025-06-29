@@ -44,6 +44,9 @@ class fileInfo {
     getBaseName() {
         return path.basename(this.filePath, this.getExtName());//ファイル名取得
     }
+    getDirName() {
+        return path.dirname(this.filePath);//ファイルのディレクトリ名取得
+    }
     getOriginalExtName() {
         return path.extname(this.originalfilePath);//ファイルの拡張子取得
     }
@@ -90,6 +93,10 @@ class fileInfo {
             throw error;
         }
     }
+    isLocked() {
+        const lockPath = this.originalfilePath + '.lock';
+        return fs.existsSync(lockPath);
+    }
     clone() {
         const clone = new fileInfo(this.originalfilePath);
         clone.setFilePath(this.filePath);
@@ -108,6 +115,7 @@ export class LoadFiles {
             logger.info(`LoadFiles.main: ${targetPath}`);
             let postStreamFactory = null;
             if (cliOptions['dryRun']) {
+                //分割しつつJSONに変換して読み捨て、Errorが出たらretryする
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, NullOutputStream], cliOptions, config);
             } else if (cliOptions['queue']) {
                 config.outputDir = config.queueDir || './queue/';
@@ -117,6 +125,7 @@ export class LoadFiles {
                 postStreamFactory = new OutputStreamFactory([RateControlStream, RetryOutputStream, SplunkOutputStream], cliOptions, config);
                 //postStreamFactory = new OutputStreamFactory([RateControlStream, SplunkOutputStream], cliOptions, config);
             } else {
+                //分割しつつJSONに変換してSplunkに送信、Errorが出たらretryする
                 postStreamFactory = new OutputStreamFactory([RetryOutputStream, SplitOutputStream, JsonOutputStream, SplunkOutputStream], cliOptions, config);
             }
             let num = 1;
@@ -128,10 +137,11 @@ export class LoadFiles {
                 const filenum = num++;
                 if (fileInfoObj.getExtName() === '.lock') return;
 
-                logger.info(`Processing file: ${fileInfoObj.getFilePath()}`);
+                logger.info(`[${filenum}] Processing file: ${fileInfoObj.getFilePath()} => splunk-ee`);
                 const size = fileInfoObj.size();
                 if (size > 0) {
-                    logger.info(`File size: ${size} bytes`);
+                    logger.info(`[${filenum}] File size: ${Math.floor((size / 1024 / 1024) * 100) / 100} MB`);
+                    // CSVファイルを読み込み、JSONに変換してSplunkにPOST送信メソッドを呼び出す
                     const postStream = postStreamFactory.getInstance(fileInfoObj);
                     try {
                         let isRetry = false;
@@ -148,7 +158,7 @@ export class LoadFiles {
                             }
                         } while (isRetry);
                     } catch (error) {
-                        logger.error(`Error processing file: ${fullpath}`, error);
+                        logger.error(`Error processing file: ${fullpath}`, error); // エラーハンドリング
                     }
                 } else {
                     logger.warn(`File is empty: ${fullpath}`);
@@ -161,7 +171,7 @@ export class LoadFiles {
                 }
             });
         } catch (error) {
-            logger.error(`Error in LoadFiles.main: ${error.message}`, error);
+            logger.error(`Error in LoadFiles.main: ${error.message}`, error); // エラーハンドリング
         }
     }
 }

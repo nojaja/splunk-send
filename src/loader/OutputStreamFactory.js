@@ -20,16 +20,17 @@ class OutputStreamFactory {
         this.OutputStreams = OutputStreams;
         this.options = Object.assign({}, config, {
             url: config.url,
-            proxy: config.proxy,
-            token: config.token,
-            channel: config.channel || uuid.v4(),
+            proxy: config.proxy || '',
+            token: config.token || '',
+            channel: config.channel || uuid.v4(), //process毎のユニークなchannelを生成
             debug: config.debug || false,
-            outputdir: config.outputdir || './output',
+            outputdir: config.outputdir || './output/',
+            // Event Metadataを設定
             eventMetadata: {
-                time: config.time || new Date().getTime(),
-                host: os.hostname(),
-                source: config.source || 'default',
-                sourcetype: cliOptions.sourcetype || 'test'
+                time: config.time || new Date().getTime(), //process毎で固定のタイムスタンプを設定
+                host: os.hostname(), //Processのホスト名を設定
+                source: config.source || 'default', //Process毎のsourceを設定
+                sourcetype: cliOptions.sourcetype || 'test' //Process毎のsourcetypeを設定
             }
         })
         if (cliOptions.index) {
@@ -50,6 +51,7 @@ class OutputStreamFactory {
             const instance = new Cls(fileInfoObj, this.options);
             instance.rootCls = (rootCls) ? rootCls : instance;
             instance.chainCls = _getInstance(fileInfoObj, outputStreams, instance.rootCls);
+            logger.info(`${instance.constructor.name} rootCls:${instance.rootCls.name} chainCls:${(instance.chainCls) ? instance.chainCls.constructor.name : ''}`);
             return instance;
         }
         return _getInstance(fileInfoObj, Array.from(this.OutputStreams));

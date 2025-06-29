@@ -22,6 +22,7 @@ docker run -d -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_USER=root" -e "
 ## Usage
 ```
 node ./dist/index.bundle.js --url http://localhost:8088/services/collector --token <token> --file ./test.csv
+
 ```
 
 ### SplunkSend2.js Request data sample

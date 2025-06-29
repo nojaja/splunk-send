@@ -4,7 +4,7 @@
   "description": "SplunkEEへのデータ投入ツール",
   "main": "dist/loader.bundle.js",
   "bin": {
-    "loader": "loader.bundle.js"
+    "loader": "dist/loader.bundle.js"
   },
   "files": [
     "dist"

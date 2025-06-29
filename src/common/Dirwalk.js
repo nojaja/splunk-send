@@ -5,9 +5,13 @@ import * as PathUtil from '@nojaja/pathutil';
 
 const logger = log4js.getLogger('loader/index.js');
 
+/**
+ * Dirwalkクラスは、指定されたディレクトリを再帰的に走査し、特定の拡張子を持つファイルのパスを取得する
+ * @class
+ */
 export class Dirwalk {
     constructor(debug) {
-        this.debug = debug;
+        this.debug = debug || false;
         this.counter = 0;
     }
     /**
@@ -21,8 +25,13 @@ export class Dirwalk {
     async dirwalk(targetPath, settings, fileCallback, errCallback) {
         this.counter = 0;
         const _settings = Object.assign({}, settings);
-        return await this._dirwalk(targetPath, targetPath, _settings, fileCallback, errCallback);
-
+        return await this._dirwalk(
+            targetPath, 
+            targetPath, 
+            _settings, 
+            fileCallback, 
+            errCallback
+        );
     }
 
     async _dirwalk(targetPath, basePath, settings, fileCallback, errCallback) {
@@ -33,21 +42,27 @@ export class Dirwalk {
                 const filePath = PathUtil.normalizeSeparator(PathUtil.absolutePath(path.join(targetPath, file)));
                 const stat = fs.statSync(filePath);
                 if (stat.isSymbolicLink()) {
-                    // シンボリックリンクは無視する
-                    continue;
+                    logger.debug(`Skipping symbolic link: ${filePath}`);
+                    continue; // シンボリックリンクは無視する
                 }
                 if (stat.isDirectory()) {
-                    await this._dirwalk(filePath, basePath, _settings, fileCallback, errCallback);
+                    await this._dirwalk(
+                        filePath, 
+                        basePath, 
+                        _settings, 
+                        fileCallback, 
+                        errCallback
+                    ); // ディレクトリの場合は再帰的に呼び出す
                 } else {
                     this.counter++;
                     if (this.debug) logger.debug(`file: ${filePath}`);
                     try {
-                        await fileCallback(path.relative(basePath, filePath), _settings);
+                        await fileCallback(path.relative(basePath, filePath), _settings); // ファイルならコールバックで通知
                     } catch (error) {
                         if (errCallback) {
                             errCallback(error);
                         } else {
-                            logger.error(`Error processing file: ${filePath}`, error);
+                            logger.error(`Error processing file: ${filePath}`, error); // エラーが発生した場合はエラーログを出力
                         }
                     }
                 }
